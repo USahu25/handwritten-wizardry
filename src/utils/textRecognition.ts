@@ -3,17 +3,23 @@ import { pipeline } from '@huggingface/transformers';
 
 let recognizer: any = null;
 
+// You'll need to set your Hugging Face token here
+const HF_TOKEN = 'your_hugging_face_token_here'; // Replace with your actual token
+
 export const initializeRecognizer = async () => {
   if (!recognizer) {
     try {
-      // Use a more reliable OCR model that works in browser
+      // Use the microsoft/trocr-base-handwritten model with your HF token
       recognizer = await pipeline(
         'image-to-text',
-        'Xenova/trocr-base-printed',
-        { device: 'wasm' }
+        'microsoft/trocr-base-handwritten',
+        { 
+          device: 'wasm',
+          token: HF_TOKEN
+        }
       );
     } catch (error) {
-      console.error('Failed to initialize with trocr-base-printed, trying fallback model:', error);
+      console.error('Failed to initialize with trocr-base-handwritten, trying fallback model:', error);
       // Fallback to a simpler but more reliable model
       try {
         recognizer = await pipeline(
