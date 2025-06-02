@@ -9,13 +9,18 @@ const HF_TOKEN = 'your_hugging_face_token_here'; // Replace with your actual tok
 export const initializeRecognizer = async () => {
   if (!recognizer) {
     try {
+      // Set the authorization header for Hugging Face API access
+      if (HF_TOKEN !== 'your_hugging_face_token_here') {
+        // Configure the environment for authenticated requests
+        (globalThis as any).HF_TOKEN = HF_TOKEN;
+      }
+      
       // Use the microsoft/trocr-base-handwritten model with your HF token
       recognizer = await pipeline(
         'image-to-text',
         'microsoft/trocr-base-handwritten',
         { 
-          device: 'wasm',
-          token: HF_TOKEN
+          device: 'wasm'
         }
       );
     } catch (error) {
