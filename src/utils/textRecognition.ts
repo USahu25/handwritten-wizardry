@@ -6,19 +6,19 @@ let recognizer: any = null;
 export const initializeRecognizer = async () => {
   if (!recognizer) {
     try {
-      // Use 'wasm' instead of 'cpu' as it's supported in browser environments
+      // Use a more reliable OCR model that works in browser
       recognizer = await pipeline(
         'image-to-text',
-        'microsoft/trocr-base-handwritten',
+        'Xenova/trocr-base-printed',
         { device: 'wasm' }
       );
     } catch (error) {
-      console.error('Failed to initialize with trocr-base-handwritten, trying fallback model:', error);
-      // Fallback to a more basic model if the handwritten one fails
+      console.error('Failed to initialize with trocr-base-printed, trying fallback model:', error);
+      // Fallback to a simpler but more reliable model
       try {
         recognizer = await pipeline(
           'image-to-text',
-          'nlpconnect/vit-gpt2-image-captioning',
+          'Xenova/vit-gpt2-image-captioning',
           { device: 'wasm' }
         );
       } catch (fallbackError) {
