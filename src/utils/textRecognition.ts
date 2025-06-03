@@ -5,26 +5,37 @@ let recognizer: any = null;
 let translator: any = null;
 let indicTranslator: any = null;
 
-// Your Hugging Face token
-const HF_TOKEN = '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';
-
 export const initializeRecognizer = async () => {
   if (!recognizer) {
     try {
       console.log('Initializing text recognizer...');
       
-      // Use the microsoft/trocr-base-handwritten model
+      // Use the microsoft/trocr-base-printed model which has better browser support
       recognizer = await pipeline(
         'image-to-text',
-        'microsoft/trocr-base-handwritten',
+        'microsoft/trocr-base-printed',
         { 
           device: 'wasm'
         }
       );
-      console.log('Successfully initialized trocr-base-handwritten model');
+      console.log('Successfully initialized trocr-base-printed model');
     } catch (error) {
-      console.error('Failed to initialize with trocr-base-handwritten:', error);
-      throw new Error('Unable to initialize handwritten text recognition model.');
+      console.error('Failed to initialize with trocr-base-printed:', error);
+      // Fallback to a simpler model if the primary one fails
+      try {
+        console.log('Trying fallback model...');
+        recognizer = await pipeline(
+          'image-to-text',
+          'Xenova/trocr-base-printed',
+          { 
+            device: 'wasm'
+          }
+        );
+        console.log('Successfully initialized Xenova/trocr-base-printed model');
+      } catch (fallbackError) {
+        console.error('Fallback model also failed:', fallbackError);
+        throw new Error('Unable to initialize any text recognition model.');
+      }
     }
   }
   return recognizer;
@@ -76,7 +87,14 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
   try {
     console.log('Starting text recognition...');
     const recognizer = await initializeRecognizer();
-    const result = await recognizer(imageFile);
+    
+    // Convert file to image URL for the model
+    const imageUrl = URL.createObjectURL(imageFile);
+    const result = await recognizer(imageUrl);
+    
+    // Clean up the object URL
+    URL.revokeObjectURL(imageUrl);
+    
     console.log('Recognition result:', result);
     return result[0]?.generated_text || 'No text detected';
   } catch (error) {
