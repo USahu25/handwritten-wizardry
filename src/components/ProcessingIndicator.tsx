@@ -1,13 +1,21 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 
 const ProcessingIndicator = () => {
+  const steps = [
+    'Recognizing text from image...',
+    'Translating Telugu to English...',
+    'Generating English summary...',
+    'Creating Telugu summary...'
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center space-y-4 p-8"
+      className="flex flex-col items-center justify-center space-y-6 p-8"
     >
       <div className="relative w-16 h-16">
         <motion.div
@@ -21,7 +29,27 @@ const ProcessingIndicator = () => {
           transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
         />
       </div>
-      <p className="text-gray-600 font-medium">Processing your image...</p>
+      
+      <div className="text-center space-y-2">
+        <p className="text-gray-600 font-medium">Processing your Telugu text...</p>
+        <div className="space-y-1">
+          {steps.map((step, index) => (
+            <motion.p
+              key={index}
+              initial={{ opacity: 0.3 }}
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                delay: index * 0.5 
+              }}
+              className="text-sm text-gray-500"
+            >
+              {step}
+            </motion.p>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 };

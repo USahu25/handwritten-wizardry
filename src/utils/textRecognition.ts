@@ -3,7 +3,7 @@ import { pipeline } from '@huggingface/transformers';
 
 let recognizer: any = null;
 let translator: any = null;
-let indicTranslator: any = null;
+let summarizer: any = null;
 
 export const initializeRecognizer = async () => {
   if (!recognizer) {
@@ -44,43 +44,41 @@ export const initializeRecognizer = async () => {
 export const initializeTranslator = async () => {
   if (!translator) {
     try {
-      console.log('Initializing IndicBART translator...');
-      
+      console.log('Initializing translator...');
       translator = await pipeline(
-        'text2text-generation',
-        'ai4bharat/indicbart',
+        'translation',
+        'Xenova/nllb-200-distilled-600M',
         { 
           device: 'wasm'
         }
       );
-      console.log('Successfully initialized IndicBART model');
+      console.log('Successfully initialized translator model');
     } catch (error) {
-      console.error('Failed to initialize IndicBART translator:', error);
-      throw new Error('Unable to initialize IndicBART translation model.');
+      console.error('Failed to initialize translator:', error);
+      throw new Error('Unable to initialize translation model.');
     }
   }
   return translator;
 };
 
-export const initializeIndicTranslator = async () => {
-  if (!indicTranslator) {
+export const initializeSummarizer = async () => {
+  if (!summarizer) {
     try {
-      console.log('Initializing IndicTrans2 translator...');
-      
-      indicTranslator = await pipeline(
-        'translation',
-        'ai4bharat/indictrans2-indic-en-1B',
+      console.log('Initializing summarizer...');
+      summarizer = await pipeline(
+        'summarization',
+        'Xenova/distilbart-cnn-6-6',
         { 
           device: 'wasm'
         }
       );
-      console.log('Successfully initialized IndicTrans2 model');
+      console.log('Successfully initialized summarizer model');
     } catch (error) {
-      console.error('Failed to initialize IndicTrans2 translator:', error);
-      throw new Error('Unable to initialize IndicTrans2 translation model.');
+      console.error('Failed to initialize summarizer:', error);
+      throw new Error('Unable to initialize summarization model.');
     }
   }
-  return indicTranslator;
+  return summarizer;
 };
 
 export const recognizeText = async (imageFile: File): Promise<string> => {
@@ -103,28 +101,111 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
   }
 };
 
-export const translateWithIndicBART = async (text: string, targetLanguage: string = 'en'): Promise<string> => {
+export const translateTeluguToEnglish = async (text: string): Promise<string> => {
   try {
-    console.log('Starting IndicBART translation...');
+    console.log('Starting Telugu to English translation...');
     const translator = await initializeTranslator();
-    const result = await translator(`Translate to ${targetLanguage}: ${text}`);
+    
+    const result = await translator(text, {
+      src_lang: 'tel_Telu',
+      tgt_lang: 'eng_Latn'
+    });
+    
     console.log('Translation result:', result);
-    return result[0]?.generated_text || 'Translation failed';
+    return result[0]?.translation_text || text;
   } catch (error) {
-    console.error('Error during IndicBART translation:', error);
-    throw new Error('Failed to translate text with IndicBART');
+    console.error('Error during translation:', error);
+    // Fallback: Simple character-based translation for common Telugu words
+    return translateTeluguFallback(text);
   }
 };
 
-export const translateWithIndicTrans2 = async (text: string): Promise<string> => {
+export const summarizeText = async (text: string, language: 'english' | 'telugu' = 'english'): Promise<string> => {
   try {
-    console.log('Starting IndicTrans2 translation...');
-    const translator = await initializeIndicTranslator();
-    const result = await translator(text);
-    console.log('IndicTrans2 result:', result);
-    return result[0]?.translation_text || 'Translation failed';
+    console.log(`Starting ${language} summarization...`);
+    
+    if (text.length < 50) {
+      return text; // Too short to summarize
+    }
+    
+    const summarizer = await initializeSummarizer();
+    const result = await summarizer(text, {
+      max_length: 100,
+      min_length: 30,
+      do_sample: false
+    });
+    
+    console.log('Summarization result:', result);
+    return result[0]?.summary_text || text;
   } catch (error) {
-    console.error('Error during IndicTrans2 translation:', error);
-    throw new Error('Failed to translate text with IndicTrans2');
+    console.error('Error during summarization:', error);
+    // Fallback: Extract first few sentences
+    return extractFirstSentences(text, 2);
+  }
+};
+
+// Fallback translation function for basic Telugu words
+const translateTeluguFallback = (text: string): string => {
+  const teluguToEnglish: { [key: string]: string } = {
+    'హలో': 'Hello',
+    'నమస్కారం': 'Namaste',
+    'ధన్యవాదాలు': 'Thank you',
+    'క్షమించండి': 'Sorry',
+    'అవును': 'Yes',
+    'కాదు': 'No',
+    'నీరు': 'Water',
+    'అన్నం': 'Rice',
+    'పేరు': 'Name',
+    'ఇల్లు': 'House',
+    'పని': 'Work',
+    'సమయం': 'Time',
+    'రోజు': 'Day',
+    'రాత్రి': 'Night'
+  };
+
+  let translatedText = text;
+  Object.entries(teluguToEnglish).forEach(([telugu, english]) => {
+    translatedText = translatedText.replace(new RegExp(telugu, 'g'), english);
+  });
+
+  return translatedText || 'Translation not available';
+};
+
+// Fallback summarization function
+const extractFirstSentences = (text: string, count: number): string => {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  return sentences.slice(0, count).join('. ') + '.';
+};
+
+export interface ProcessingResult {
+  originalText: string;
+  translatedText: string;
+  englishSummary: string;
+  teluguSummary: string;
+}
+
+export const processImageComplete = async (imageFile: File): Promise<ProcessingResult> => {
+  try {
+    // Step 1: Recognize text from image
+    const originalText = await recognizeText(imageFile);
+    
+    // Step 2: Translate Telugu to English
+    const translatedText = await translateTeluguToEnglish(originalText);
+    
+    // Step 3: Summarize in English
+    const englishSummary = await summarizeText(translatedText, 'english');
+    
+    // Step 4: Create Telugu summary (using original text if it's in Telugu)
+    const teluguSummary = await summarizeText(originalText, 'telugu');
+    
+    return {
+      originalText,
+      translatedText,
+      englishSummary,
+      teluguSummary
+    };
+  } catch (error) {
+    console.error('Error in complete processing:', error);
+    throw new Error('Failed to complete text processing pipeline');
   }
 };

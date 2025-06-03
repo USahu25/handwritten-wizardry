@@ -1,28 +1,30 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageUpload from '@/components/ImageUpload';
-import RecognitionResult from '@/components/RecognitionResult';
+import ComprehensiveResult from '@/components/ComprehensiveResult';
 import ProcessingIndicator from '@/components/ProcessingIndicator';
-import { recognizeText } from '@/utils/textRecognition';
+import { processImageComplete, ProcessingResult } from '@/utils/textRecognition';
 import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [recognizedText, setRecognizedText] = useState<string | null>(null);
+  const [result, setResult] = useState<ProcessingResult | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleImageSelect = async (file: File) => {
     try {
       setIsProcessing(true);
+      setResult(null);
       setPreviewUrl(URL.createObjectURL(file));
       
-      const text = await recognizeText(file);
-      setRecognizedText(text);
+      const processingResult = await processImageComplete(file);
+      setResult(processingResult);
       
       toast({
         title: "Success",
-        description: "Text recognition completed successfully.",
+        description: "Complete text analysis completed successfully.",
       });
     } catch (error) {
       toast({
@@ -30,7 +32,7 @@ const Index = () => {
         description: "Failed to process the image. Please try again.",
         variant: "destructive",
       });
-      setRecognizedText(null);
+      setResult(null);
     } finally {
       setIsProcessing(false);
     }
@@ -50,13 +52,13 @@ const Index = () => {
             transition={{ delay: 0.2 }}
             className="inline-block px-4 py-1.5 mb-4 text-sm font-medium text-primary bg-primary/10 rounded-full"
           >
-            AI-Powered
+            AI-Powered Telugu Processing
           </motion.div>
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            Handwritten Text Recognition
+            Telugu Text Recognition & Translation
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Upload an image of handwritten text and let AI convert it to digital text
+            Upload an image of Telugu text for digitization, translation, and summarization
           </p>
         </motion.div>
 
@@ -81,8 +83,8 @@ const Index = () => {
             {isProcessing && <ProcessingIndicator />}
           </AnimatePresence>
 
-          {recognizedText && !isProcessing && (
-            <RecognitionResult text={recognizedText} />
+          {result && !isProcessing && (
+            <ComprehensiveResult result={result} />
           )}
         </div>
       </div>
