@@ -5,8 +5,8 @@ let recognizer: any = null;
 let translator: any = null;
 let indicTranslator: any = null;
 
-// You'll need to set your Hugging Face token here
-const HF_TOKEN = 'your_hugging_face_token_here'; // Replace with your actual token
+// Your Hugging Face token
+const HF_TOKEN = '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';
 
 export const initializeRecognizer = async () => {
   if (!recognizer) {
@@ -19,7 +19,7 @@ export const initializeRecognizer = async () => {
         'microsoft/trocr-base-handwritten',
         { 
           device: 'wasm',
-          auth_token: HF_TOKEN !== 'your_hugging_face_token_here' ? HF_TOKEN : undefined
+          token: HF_TOKEN
         }
       );
       console.log('Successfully initialized trocr-base-handwritten model');
@@ -41,7 +41,7 @@ export const initializeTranslator = async () => {
         'ai4bharat/indicbart',
         { 
           device: 'wasm',
-          auth_token: HF_TOKEN !== 'your_hugging_face_token_here' ? HF_TOKEN : undefined
+          token: HF_TOKEN
         }
       );
       console.log('Successfully initialized IndicBART model');
@@ -63,7 +63,7 @@ export const initializeIndicTranslator = async () => {
         'ai4bharat/indictrans2-indic-en-1B',
         { 
           device: 'wasm',
-          auth_token: HF_TOKEN !== 'your_hugging_face_token_here' ? HF_TOKEN : undefined
+          token: HF_TOKEN
         }
       );
       console.log('Successfully initialized IndicTrans2 model');
