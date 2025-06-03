@@ -11,21 +11,20 @@ const HF_TOKEN = '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';
 export const initializeRecognizer = async () => {
   if (!recognizer) {
     try {
-      console.log('Initializing text recognizer with HF token...');
+      console.log('Initializing text recognizer...');
       
-      // Use the microsoft/trocr-base-handwritten model with proper auth
+      // Use the microsoft/trocr-base-handwritten model
       recognizer = await pipeline(
         'image-to-text',
         'microsoft/trocr-base-handwritten',
         { 
-          device: 'wasm',
-          token: HF_TOKEN
+          device: 'wasm'
         }
       );
       console.log('Successfully initialized trocr-base-handwritten model');
     } catch (error) {
       console.error('Failed to initialize with trocr-base-handwritten:', error);
-      throw new Error('Unable to initialize handwritten text recognition model. Please check your Hugging Face token.');
+      throw new Error('Unable to initialize handwritten text recognition model.');
     }
   }
   return recognizer;
@@ -40,8 +39,7 @@ export const initializeTranslator = async () => {
         'text2text-generation',
         'ai4bharat/indicbart',
         { 
-          device: 'wasm',
-          token: HF_TOKEN
+          device: 'wasm'
         }
       );
       console.log('Successfully initialized IndicBART model');
@@ -62,8 +60,7 @@ export const initializeIndicTranslator = async () => {
         'translation',
         'ai4bharat/indictrans2-indic-en-1B',
         { 
-          device: 'wasm',
-          token: HF_TOKEN
+          device: 'wasm'
         }
       );
       console.log('Successfully initialized IndicTrans2 model');
