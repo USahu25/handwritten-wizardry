@@ -1,4 +1,3 @@
-
 // Enhanced Telugu text recognition and processing utilities with improved accuracy
 
 export interface ProcessingResult {
@@ -96,7 +95,7 @@ const teluguToEnglishDict: { [key: string]: string } = {
   'మాట్లాడాను': 'I spoke',
   'మాట్లాడుతున్నాను': 'I am speaking',
   'తింటాను': 'I eat',
-  'తిన్నাను': 'I ate',
+  'తిన్నాను': 'I ate',
   'తింటున్నాను': 'I am eating',
   'త్రాగుతాను': 'I drink',
   'త్రాగాను': 'I drank',
@@ -242,7 +241,7 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
     'చదువుకునేవాడు': 'used to study',
     'ప్రేమించేవారు': 'used to love',
     'ప్రియమైన స్నేహితుడా': 'Dear friend',
-    'బాగా జరుగుతోంది': 'going well',
+    'బాగున్నాను': 'going well',
     'ఆనందంగా ఉంటుంది': 'feels pleasant',
     'అద్భుతమైన రచనలు': 'wonderful writings',
     'అధికారిక భాష': 'official language',
