@@ -1,3 +1,4 @@
+
 // Enhanced Telugu text recognition and processing utilities with improved accuracy
 
 export interface ProcessingResult {
@@ -140,7 +141,6 @@ const teluguToEnglishDict: { [key: string]: string } = {
   'తెచ్చుకుంటాను': 'I will get',
   'కలిసి': 'Together',
   'అందరం': 'Everyone',
-  'చాలా': 'Very/Much',
   'ఇష్టం': 'Like',
   'చదవడం': 'Reading',
   'రాసుకుంటాను': 'I write',
@@ -239,11 +239,14 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
     'చదువుకునేవాడు': 'used to study',
     'ప్రేమించేవారు': 'used to love',
     'ప్రియమైన స్నేహితుడా': 'Dear friend',
-    'బాగున్నాను': 'going well',
+    'బాగున్నాను': 'am doing well',
     'ఆనందంగా ఉంటుంది': 'feels pleasant',
     'అద్భుతమైన రచనలు': 'wonderful writings',
     'అధికారిక భాష': 'official language',
-    'మాట్లాడటం నాకు': 'speaking gives me'
+    'మాట్లాడటం నాకు': 'speaking gives me',
+    'గణితం మరియు తెలుగు': 'Mathematics and Telugu',
+    'చాలా మంచిగా చెప్పుతారు': 'explains very well',
+    'చాలా మంచిగా చెప్పుతున్నారు': 'are explaining very well'
   };
   
   Object.entries(compoundPhrases).forEach(([telugu, english]) => {
