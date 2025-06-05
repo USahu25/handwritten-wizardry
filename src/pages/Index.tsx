@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImageUpload from '@/components/ImageUpload';
 import ProcessingModeSelector, { ProcessingMode } from '@/components/ProcessingModeSelector';
 import ProcessingResult from '@/components/ProcessingResult';
+import RecognitionResult from '@/components/RecognitionResult';
 import ProcessingIndicator from '@/components/ProcessingIndicator';
 import { processImageComplete, ProcessingResult as ProcessingResultType } from '@/utils/textRecognition';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,12 +14,14 @@ const Index = () => {
   const [result, setResult] = useState<ProcessingResultType | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [processingMode, setProcessingMode] = useState<ProcessingMode>('digitize');
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const handleImageSelect = async (file: File) => {
     try {
       setIsProcessing(true);
       setResult(null);
+      setCurrentFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       
       const processingResult = await processImageComplete(file, processingMode);
@@ -43,6 +46,12 @@ const Index = () => {
       setResult(null);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (currentFile) {
+      handleImageSelect(currentFile);
     }
   };
 
@@ -98,7 +107,18 @@ const Index = () => {
           </AnimatePresence>
 
           {result && !isProcessing && (
-            <ProcessingResult result={result} mode={processingMode} />
+            <>
+              {processingMode === 'digitize' ? (
+                <RecognitionResult 
+                  text={result.originalText}
+                  confidence={result.confidence}
+                  onRetry={handleRetry}
+                  isProcessing={isProcessing}
+                />
+              ) : (
+                <ProcessingResult result={result} mode={processingMode} />
+              )}
+            </>
           )}
         </div>
       </div>

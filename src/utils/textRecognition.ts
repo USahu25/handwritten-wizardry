@@ -11,6 +11,7 @@ export interface ProcessingResult {
   teluguSummary?: string;
   googleTranslateUrl?: string;
   externalTranslationUrl?: string;
+  confidence?: number;
 }
 
 // Comprehensive Telugu to English dictionary with grammatical patterns
@@ -191,17 +192,18 @@ const teluguGrammarPatterns = [
   { pattern: /(\w+)వి/g, replacement: '$1s' }
 ];
 
-// Real OCR using Hugging Face Transformers
-export const recognizeText = async (imageFile: File): Promise<string> => {
-  console.log('Starting real OCR text recognition...');
+// Enhanced OCR with confidence scoring
+export const recognizeText = async (imageFile: File): Promise<{ text: string; confidence: number }> => {
+  console.log('Starting enhanced OCR text recognition...');
   
   try {
     // Convert image file to URL for processing
     const imageUrl = URL.createObjectURL(imageFile);
     
-    // Initialize OCR pipeline - using TrOCR for text recognition with WASM device
+    // Initialize OCR pipeline with better configuration
     const ocr = await pipeline('image-to-text', 'microsoft/trocr-base-printed', {
-      device: 'wasm'
+      device: 'wasm',
+      quantized: false // Better quality
     });
     
     console.log('OCR pipeline initialized, processing image...');
@@ -212,32 +214,48 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     // Clean up the URL
     URL.revokeObjectURL(imageUrl);
     
-    // Handle the result properly based on Hugging Face Transformers API
     let recognizedText = '';
+    let confidence = 0.5; // Default confidence
     
     if (Array.isArray(result)) {
-      // If it's an array, take the first result
-      recognizedText = result.length > 0 && (result[0] as any).text ? (result[0] as any).text : '';
+      const firstResult = result[0] as any;
+      recognizedText = firstResult?.text || '';
+      confidence = firstResult?.score || 0.5;
     } else if (result && typeof result === 'object') {
-      // If it's a single object with text property
-      recognizedText = (result as any).text || '';
+      const singleResult = result as any;
+      recognizedText = singleResult.text || '';
+      confidence = singleResult.score || 0.5;
     }
     
-    console.log('Raw OCR result:', recognizedText);
-    
-    // Enhanced fallback for Telugu text
-    if (!recognizedText || recognizedText.trim().length < 3) {
+    // Enhanced text validation and confidence adjustment
+    if (recognizedText && recognizedText.trim().length > 3) {
+      // Check if text contains Telugu characters
+      const teluguPattern = /[\u0C00-\u0C7F]/;
+      if (teluguPattern.test(recognizedText)) {
+        confidence = Math.min(confidence + 0.2, 1.0); // Boost confidence for Telugu text
+      }
+      
+      // Penalize very short text
+      if (recognizedText.length < 10) {
+        confidence *= 0.7;
+      }
+    } else {
       console.log('OCR found minimal text, using enhanced fallback');
       recognizedText = 'చిత్రంలో పాఠ్యం స్పష్టంగా కనిపించడం లేదు. దయచేసి మంచి నాణ్యతగల చిత్రం ఎక్కించండి.';
+      confidence = 0.1;
     }
     
     console.log('Final recognized text:', recognizedText);
-    return recognizedText;
+    console.log('Confidence score:', confidence);
+    
+    return { text: recognizedText, confidence };
     
   } catch (error) {
     console.error('OCR Error:', error);
-    // Enhanced fallback for OCR errors
-    return 'OCR లో లోపం జరిగింది. దయచేసి చిత్రం మరియు మళ్లీ ప్రయత్నించండి.';
+    return {
+      text: 'OCR లో లోపం జరిగింది. దయచేసి చిత్రం మరియు మళ్లీ ప్రయత్నించండి.',
+      confidence: 0.1
+    };
   }
 };
 
@@ -445,9 +463,6 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
       case 'friendship':
         summary = 'Content about friendship and social interactions.';
         break;
-      case 'literature':
-        summary = 'Discussion about Telugu language and literature.';
-        break;
       case 'narrative':
         summary = 'A story or narrative about characters and events.';
         break;
@@ -461,7 +476,7 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
   return summary;
 };
 
-// Enhanced main processing function with Google Translate integration
+// Enhanced main processing function with confidence scores
 export const processImageComplete = async (
   imageFile: File, 
   mode: ProcessingMode = 'digitize'
@@ -469,10 +484,11 @@ export const processImageComplete = async (
   try {
     console.log(`Starting ${mode} processing...`);
     
-    const originalText = await recognizeText(imageFile);
+    const { text: originalText, confidence } = await recognizeText(imageFile);
     
     const result: ProcessingResult = {
-      originalText
+      originalText,
+      confidence
     };
 
     switch (mode) {
