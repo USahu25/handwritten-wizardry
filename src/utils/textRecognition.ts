@@ -1,4 +1,3 @@
-
 // Enhanced Telugu text recognition and processing utilities with real OCR
 
 import { pipeline } from '@huggingface/transformers';
@@ -110,7 +109,7 @@ const teluguToEnglishDict: { [key: string]: string } = {
   'చదువుతున్నాను': 'I am studying',
   'చదివాను': 'I studied',
   'నేర్చుకుంటున్నాను': 'I am learning',
-  'నేర్చుకున్నాను': 'I learned',
+  'నేర్చుకుంటున్నాను': 'I learned',
   'పరీక్ష': 'Exam',
   'విద్యార్థి': 'Student',
   'గురువు': 'Teacher',
@@ -210,14 +209,23 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     // Clean up the URL
     URL.revokeObjectURL(imageUrl);
     
-    let recognizedText = result.generated_text || '';
+    // Handle the result properly - it can be an array or single object
+    let recognizedText = '';
+    
+    if (Array.isArray(result)) {
+      // If it's an array, take the first result
+      recognizedText = result.length > 0 && result[0].text ? result[0].text : '';
+    } else if (result && typeof result === 'object' && 'text' in result) {
+      // If it's a single object with text property
+      recognizedText = result.text || '';
+    }
     
     console.log('Raw OCR result:', recognizedText);
     
     // If no text is recognized or it's very short, provide a fallback
     if (!recognizedText || recognizedText.trim().length < 3) {
       console.log('OCR found minimal text, using fallback');
-      recognizedText = 'పాठ్యం గుర్తించలేకపోయింది. దయచేసి స్పష్టమైన చిత్రం ఎక్కించండి.';
+      recognizedText = 'పాఠ్యం గుర్తించలేకపోయింది. దయచేసి స్పష్టమైన చిత్రం ఎక్కించండి.';
     }
     
     console.log('Final recognized text:', recognizedText);
@@ -226,7 +234,7 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
   } catch (error) {
     console.error('OCR Error:', error);
     // Fallback for OCR errors
-    return 'పాठ్యం గుర్తించడంలో లోపం జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.';
+    return 'పాఠ్యం గుర్తించడంలో లోపం జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.';
   }
 };
 
