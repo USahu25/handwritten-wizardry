@@ -1,6 +1,9 @@
+
 // Enhanced Telugu text recognition and processing utilities with real OCR
 
 import { pipeline } from '@huggingface/transformers';
+
+export type ProcessingMode = 'digitize' | 'translate' | 'summarize';
 
 export interface ProcessingResult {
   originalText: string;
