@@ -209,15 +209,15 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     // Clean up the URL
     URL.revokeObjectURL(imageUrl);
     
-    // Handle the result properly - it can be an array or single object
+    // Handle the result properly based on Hugging Face Transformers API
     let recognizedText = '';
     
     if (Array.isArray(result)) {
       // If it's an array, take the first result
-      recognizedText = result.length > 0 && result[0].text ? result[0].text : '';
-    } else if (result && typeof result === 'object' && 'text' in result) {
-      // If it's a single object with text property
-      recognizedText = result.text || '';
+      recognizedText = result.length > 0 && result[0].generated_text ? result[0].generated_text : '';
+    } else if (result && typeof result === 'object' && 'generated_text' in result) {
+      // If it's a single object with generated_text property
+      recognizedText = (result as any).generated_text || '';
     }
     
     console.log('Raw OCR result:', recognizedText);
@@ -263,9 +263,9 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
     'గణితం మరియు తెలుగు': 'Mathematics and Telugu',
     'చాలా మంచిగా చెప్పుతారు': 'explains very well',
     'చాలా మంచిగా చెప్పుతున్నారు': 'are explaining very well',
-    'పాठ్యం గుర్తించలేకపోయింది': 'Text could not be recognized',
+    'పాఠ్యం గుర్తించలేకపోయింది': 'Text could not be recognized',
     'స్పష్టమైన చిత్రం ఎక్కించండి': 'Please upload a clearer image',
-    'పాठ్యం గుర్తించడంలో లోపం జరిగింది': 'Error occurred in text recognition',
+    'పాఠ్యం గుర్తించడంలో లోపం జరిగింది': 'Error occurred in text recognition',
     'మళ్లీ ప్రయత్నించండి': 'Please try again'
   };
   
@@ -300,7 +300,7 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
   return translatedText;
 };
 
-// Enhanced contextual translation
+// Advanced contextual translation
 const enhanceWithContextualTranslation = (originalText: string, partialTranslation: string): string => {
   const contextClues = [
     {
@@ -374,7 +374,7 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
     
     switch (detectedTheme) {
       case 'error':
-        summary = 'చిత్రంలో పాठ్యం స్పష్టంగా గుర్తించలేకపోయింది. స్పష్టమైన చిత్రం అవసరం.';
+        summary = 'చిత్రంలో పాఠ్యం స్పష్టంగా గుర్తించలేకపోయింది. స్పష్టమైన చిత్రం అవసరం.';
         break;
       case 'education':
         summary = 'ఈ వచనం విద్య, పాఠశాల జీవితం మరియు అధ్యయన అనుభవాల గురించి వివరిస్తుంది.';
