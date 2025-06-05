@@ -2,15 +2,17 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageUpload from '@/components/ImageUpload';
-import ComprehensiveResult from '@/components/ComprehensiveResult';
+import ProcessingModeSelector, { ProcessingMode } from '@/components/ProcessingModeSelector';
+import ProcessingResult from '@/components/ProcessingResult';
 import ProcessingIndicator from '@/components/ProcessingIndicator';
-import { processImageComplete, ProcessingResult } from '@/utils/textRecognition';
+import { processImageComplete, ProcessingResult as ProcessingResultType } from '@/utils/textRecognition';
 import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<ProcessingResult | null>(null);
+  const [result, setResult] = useState<ProcessingResultType | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>('digitize');
   const { toast } = useToast();
 
   const handleImageSelect = async (file: File) => {
@@ -19,17 +21,23 @@ const Index = () => {
       setResult(null);
       setPreviewUrl(URL.createObjectURL(file));
       
-      const processingResult = await processImageComplete(file);
+      const processingResult = await processImageComplete(file, processingMode);
       setResult(processingResult);
+      
+      const modeMessages = {
+        digitize: 'Text digitization completed successfully.',
+        translate: 'Translation completed successfully.',
+        summarize: 'Text analysis and summarization completed successfully.'
+      };
       
       toast({
         title: "Success",
-        description: "Complete text analysis completed successfully.",
+        description: modeMessages[processingMode],
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to process the image. Please try again.",
+        description: `Failed to ${processingMode} the image. Please try again.`,
         variant: "destructive",
       });
       setResult(null);
@@ -63,6 +71,12 @@ const Index = () => {
         </motion.div>
 
         <div className="space-y-8">
+          <ProcessingModeSelector
+            selectedMode={processingMode}
+            onModeChange={setProcessingMode}
+            disabled={isProcessing}
+          />
+          
           <ImageUpload onImageSelect={handleImageSelect} isProcessing={isProcessing} />
           
           {previewUrl && (
@@ -84,7 +98,7 @@ const Index = () => {
           </AnimatePresence>
 
           {result && !isProcessing && (
-            <ComprehensiveResult result={result} />
+            <ProcessingResult result={result} mode={processingMode} />
           )}
         </div>
       </div>

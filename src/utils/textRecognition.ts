@@ -4,9 +4,10 @@ import { pipeline } from '@huggingface/transformers';
 
 export interface ProcessingResult {
   originalText: string;
-  translatedText: string;
-  englishSummary: string;
-  teluguSummary: string;
+  translatedText?: string;
+  englishSummary?: string;
+  teluguSummary?: string;
+  externalTranslationUrl?: string;
 }
 
 // Comprehensive Telugu to English dictionary with grammatical patterns
@@ -135,7 +136,7 @@ const teluguToEnglishDict: { [key: string]: string } = {
   'రుచిగా': 'Deliciously',
   'వంట': 'Cooking',
   'చేస్తుంది': 'Does/Makes',
-  'చెప్పుతారు': 'Tell/Say',
+  'చేప్పుతారు': 'Tell/Say',
   'సహాయం': 'Help',
   'మార్కులు': 'Marks',
   'తెచ్చుకుంటాను': 'I will get',
@@ -337,6 +338,12 @@ const enhanceWithContextualTranslation = (originalText: string, partialTranslati
   return partialTranslation;
 };
 
+// Generate external translation URL
+export const generateExternalTranslationUrl = (text: string): string => {
+  const encodedText = encodeURIComponent(text);
+  return `https://www.easyhindityping.com/telugu-to-english-translation?text=${encodedText}`;
+};
+
 // Advanced summarization with content analysis
 export const summarizeText = async (text: string, language: 'english' | 'telugu' = 'english'): Promise<string> => {
   console.log(`Starting advanced ${language} summarization...`);
@@ -422,9 +429,6 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
       case 'friendship':
         summary = 'This text talks about friendship, social interactions, and personal communication experiences.';
         break;
-      case 'literature':
-        summary = 'This text explores Telugu language, literature, and cultural heritage significance.';
-        break;
       case 'narrative':
         summary = 'This text narrates a story about characters and their life experiences.';
         break;
@@ -443,27 +447,45 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
   return summary;
 };
 
-// Enhanced main processing function
-export const processImageComplete = async (imageFile: File): Promise<ProcessingResult> => {
+// Enhanced main processing function with mode selection
+export const processImageComplete = async (
+  imageFile: File, 
+  mode: ProcessingMode = 'digitize'
+): Promise<ProcessingResult> => {
   try {
-    console.log('Starting real OCR complete image processing...');
+    console.log(`Starting ${mode} processing...`);
     
     const originalText = await recognizeText(imageFile);
-    const translatedText = await translateTeluguToEnglish(originalText);
-    const englishSummary = await summarizeText(translatedText, 'english');
-    const teluguSummary = await summarizeText(originalText, 'telugu');
     
-    console.log('Real OCR processing completed successfully');
-    
-    return {
-      originalText,
-      translatedText,
-      englishSummary,
-      teluguSummary
+    const result: ProcessingResult = {
+      originalText
     };
+
+    switch (mode) {
+      case 'digitize':
+        // Only digitize - no additional processing
+        break;
+        
+      case 'translate':
+        // Provide both internal translation and external URL
+        result.translatedText = await translateTeluguToEnglish(originalText);
+        result.externalTranslationUrl = generateExternalTranslationUrl(originalText);
+        break;
+        
+      case 'summarize':
+        // Full processing with summaries
+        result.translatedText = await translateTeluguToEnglish(originalText);
+        result.englishSummary = await summarizeText(result.translatedText, 'english');
+        result.teluguSummary = await summarizeText(originalText, 'telugu');
+        break;
+    }
+    
+    console.log(`${mode} processing completed successfully`);
+    return result;
+    
   } catch (error) {
-    console.error('Error in real OCR processing:', error);
-    throw new Error('Failed to complete real OCR text processing pipeline');
+    console.error(`Error in ${mode} processing:`, error);
+    throw new Error(`Failed to complete ${mode} text processing pipeline`);
   }
 };
 
