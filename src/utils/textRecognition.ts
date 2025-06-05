@@ -1,3 +1,4 @@
+
 // Enhanced Telugu text recognition and processing utilities with real OCR
 
 import { pipeline } from '@huggingface/transformers';
@@ -109,7 +110,6 @@ const teluguToEnglishDict: { [key: string]: string } = {
   'చదువుతున్నాను': 'I am studying',
   'చదివాను': 'I studied',
   'నేర్చుకుంటున్నాను': 'I am learning',
-  'నేర్చుకుంటున్నాను': 'I learned',
   'పరీక్ష': 'Exam',
   'విద్యార్థి': 'Student',
   'గురువు': 'Teacher',
@@ -214,10 +214,10 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     
     if (Array.isArray(result)) {
       // If it's an array, take the first result
-      recognizedText = result.length > 0 && result[0].generated_text ? result[0].generated_text : '';
-    } else if (result && typeof result === 'object' && 'generated_text' in result) {
-      // If it's a single object with generated_text property
-      recognizedText = (result as any).generated_text || '';
+      recognizedText = result.length > 0 && (result[0] as any).text ? (result[0] as any).text : '';
+    } else if (result && typeof result === 'object') {
+      // If it's a single object with text property
+      recognizedText = (result as any).text || '';
     }
     
     console.log('Raw OCR result:', recognizedText);
