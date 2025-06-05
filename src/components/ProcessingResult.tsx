@@ -36,6 +36,12 @@ const ProcessingResult = ({ result, mode }: ProcessingResultProps) => {
     }
   };
 
+  const openGoogleTranslate = () => {
+    if (result.googleTranslateUrl) {
+      window.open(result.googleTranslateUrl, '_blank');
+    }
+  };
+
   const openExternalTranslation = () => {
     if (result.externalTranslationUrl) {
       window.open(result.externalTranslationUrl, '_blank');
@@ -83,11 +89,12 @@ const ProcessingResult = ({ result, mode }: ProcessingResultProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>English Translation</CardTitle>
-                {mode === 'translate' && (
-                  <CardDescription>
-                    Internal translation with option for external service
-                  </CardDescription>
-                )}
+                <CardDescription>
+                  {mode === 'translate' 
+                    ? 'Internal translation with Google Translate and external service options'
+                    : 'Internal translation generated for summarization'
+                  }
+                </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -103,24 +110,44 @@ const ProcessingResult = ({ result, mode }: ProcessingResultProps) => {
                   )}
                   {copiedStates['translation'] ? 'Copied!' : 'Copy'}
                 </Button>
-                {mode === 'translate' && result.externalTranslationUrl && (
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed mb-4">
+              {result.translatedText}
+            </p>
+            
+            {/* Translation Service Options - Only for translate mode */}
+            {mode === 'translate' && (
+              <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <p className="text-sm text-gray-600 w-full mb-2">
+                  For more accurate translation, try these services:
+                </p>
+                {result.googleTranslateUrl && (
                   <Button
                     variant="default"
+                    size="sm"
+                    onClick={openGoogleTranslate}
+                    className="transition-all duration-300"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Google Translate
+                  </Button>
+                )}
+                {result.externalTranslationUrl && (
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={openExternalTranslation}
                     className="transition-all duration-300"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    External Translation
+                    Telugu Typing Tool
                   </Button>
                 )}
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {result.translatedText}
-            </p>
+            )}
           </CardContent>
         </Card>
       )}

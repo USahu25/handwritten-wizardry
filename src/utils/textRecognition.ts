@@ -1,4 +1,3 @@
-
 // Enhanced Telugu text recognition and processing utilities with real OCR
 
 import { pipeline } from '@huggingface/transformers';
@@ -10,6 +9,7 @@ export interface ProcessingResult {
   translatedText?: string;
   englishSummary?: string;
   teluguSummary?: string;
+  googleTranslateUrl?: string;
   externalTranslationUrl?: string;
 }
 
@@ -225,10 +225,10 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     
     console.log('Raw OCR result:', recognizedText);
     
-    // If no text is recognized or it's very short, provide a fallback
+    // Enhanced fallback for Telugu text
     if (!recognizedText || recognizedText.trim().length < 3) {
-      console.log('OCR found minimal text, using fallback');
-      recognizedText = 'పాఠ్యం గుర్తించలేకపోయింది. దయచేసి స్పష్టమైన చిత్రం ఎక్కించండి.';
+      console.log('OCR found minimal text, using enhanced fallback');
+      recognizedText = 'చిత్రంలో పాఠ్యం స్పష్టంగా కనిపించడం లేదు. దయచేసి మంచి నాణ్యతగల చిత్రం ఎక్కించండి.';
     }
     
     console.log('Final recognized text:', recognizedText);
@@ -236,8 +236,8 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     
   } catch (error) {
     console.error('OCR Error:', error);
-    // Fallback for OCR errors
-    return 'పాఠ్యం గుర్తించడంలో లోపం జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.';
+    // Enhanced fallback for OCR errors
+    return 'OCR లో లోపం జరిగింది. దయచేసి చిత్రం మరియు మళ్లీ ప్రయత్నించండి.';
   }
 };
 
@@ -341,40 +341,51 @@ const enhanceWithContextualTranslation = (originalText: string, partialTranslati
   return partialTranslation;
 };
 
+// Generate Google Translate URL
+export const generateGoogleTranslateUrl = (text: string): string => {
+  const encodedText = encodeURIComponent(text);
+  return `https://translate.google.com/?sl=te&tl=en&text=${encodedText}&op=translate`;
+};
+
 // Generate external translation URL
 export const generateExternalTranslationUrl = (text: string): string => {
   const encodedText = encodeURIComponent(text);
   return `https://www.easyhindityping.com/telugu-to-english-translation?text=${encodedText}`;
 };
 
-// Advanced summarization with content analysis
+// Enhanced summarization with better content analysis
 export const summarizeText = async (text: string, language: 'english' | 'telugu' = 'english'): Promise<string> => {
-  console.log(`Starting advanced ${language} summarization...`);
+  console.log(`Starting enhanced ${language} summarization...`);
   
-  await new Promise(resolve => setTimeout(resolve, 300));
+  // Simulate processing time
+  await new Promise(resolve => setTimeout(resolve, 500));
   
-  if (text.length < 40) {
-    return text;
+  // Handle very short text
+  if (text.length < 20) {
+    return language === 'telugu' 
+      ? 'చాలా చిన్న వచనం - సారాంశం అవసరం లేదు.'
+      : 'Text too short to summarize.';
   }
   
-  const sentences = text.split(/[.!?।]+/).filter(s => s.trim().length > 8);
+  // Split into sentences more accurately
+  const sentences = text.split(/[.!?।]+/).filter(s => s.trim().length > 5);
   
   if (sentences.length <= 1) {
-    return text;
+    return text.trim();
   }
   
   let summary;
   
   if (language === 'telugu') {
-    // Enhanced Telugu summarization with theme detection
+    // Enhanced Telugu summarization with better theme detection
     const themes = {
-      education: ['పాఠశాల', 'చదువు', 'గురువు', 'పరీక్ష', 'విద్యార్థి', 'హోంవర్క్'],
-      family: ['కుటుంబం', 'తల్లి', 'తండ్రి', 'అమ్మ', 'నాన్న', 'అన్నా', 'అక్క'],
-      friendship: ['స్నేహితులు', 'స్నేహితుడు', 'మాట్లాడటం', 'కలిసి'],
-      literature: ['సాహిత్యం', 'కవులు', 'రచయితలు', 'రచనలు', 'భాష'],
-      daily_life: ['రోజు', 'ఉదయం', 'సాయంత్రం', 'భోజనం', 'వంట'],
-      story: ['ఒకప్పుడు', 'బాలుడు', 'ఊరిలో', 'కథ'],
-      error: ['లోపం', 'గుర్తించలేకపోయింది', 'ప్రయత్నించండి']
+      error: ['లోపం', 'గుర్తించలేకపోయింది', 'ప్రయత్నించండి', 'చిత్రం', 'OCR'],
+      education: ['పాఠశాల', 'చదువు', 'గురువు', 'పరీక్ష', 'విద్యార్థి', 'హోంవర్క్', 'క్లాస్'],
+      family: ['కుటుంబం', 'తల్లి', 'తండ్రి', 'అమ్మ', 'నాన్న', 'అన్నా', 'అక్క', 'తమ్ముడు'],
+      friendship: ['స్నేహితులు', 'స్నేహితుడు', 'మాట్లాడటం', 'కలిసి', 'ఆట'],
+      literature: ['సాహిత్యం', 'కవులు', 'రచయితలు', 'రచనలు', 'భాష', 'తెలుగు'],
+      daily_life: ['రోజు', 'ఉదయం', 'సాయంత్రం', 'భోజనం', 'వంట', 'ఇల్లు'],
+      story: ['ఒకప్పుడు', 'బాలుడు', 'ఊరిలో', 'కథ', 'జరిగింది']
     };
     
     const detectedTheme = Object.entries(themes).find(([_, keywords]) =>
@@ -383,74 +394,74 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
     
     switch (detectedTheme) {
       case 'error':
-        summary = 'చిత్రంలో పాఠ్యం స్పష్టంగా గుర్తించలేకపోయింది. స్పష్టమైన చిత్రం అవసరం.';
+        summary = 'చিత్రంలో వచనం స్పష్టంగా గుర్తించలేకపోయింది. మెరుగైన చిత్రం అవసరం.';
         break;
       case 'education':
-        summary = 'ఈ వచనం విద్య, పాఠశాల జీవితం మరియు అధ్యయన అనుభవాల గురించి వివరిస్తుంది.';
+        summary = 'ఈ వచనం విద్య, పాఠశాల జీవితం మరియు అధ్యయనం గురించి చర్చిస్తుంది.';
         break;
       case 'family':
-        summary = 'ఈ వచనం కుటుంబ సంబంధాలు, ఇంటి వాతావరణం మరియు కుటుంబ విలువల గురించి చర్చిస్తుంది.';
+        summary = 'కుటుంబ సంబంధాలు మరియు ఇంటి వాతావరణం గురించిన వివరణ.';
         break;
       case 'friendship':
-        summary = 'ఈ వచనం స్నేహం, సామాజిక సంబంధాలు మరియు వ్యక్తిగత అనుభవాల గురించి మాట్లాడుతుంది.';
+        summary = 'స్నేహం మరియు సామాజిక అనుభవాల గురించిన కథనం.';
         break;
       case 'literature':
-        summary = 'ఈ వచనం తెలుగు భాష, సాహిత్యం మరియు సాంస్కృతిక వారసత్వం గురించి చెబుతుంది.';
+        summary = 'తెలుగు భాష మరియు సాహిత్యం గురించిన చర్చ.';
         break;
       case 'story':
-        summary = 'ఈ వచనం ఒక కథను వివరిస్తుంది మరియు పాత్రల జీవితాల గురించి చెబుతుంది.';
+        summary = 'కథ లేదా కథనం యొక్క ముఖ్య అంశాలు.';
         break;
       default:
-        summary = 'ఈ వచనం రోజువారీ జీవితం, వ్యక్తిగత అనుభవాలు మరియు సామాజిక పరస్పర చర్యల గురించి చర్చిస్తుంది.';
+        // Take first two sentences for general content
+        summary = sentences.slice(0, Math.min(2, sentences.length)).join('. ').trim() + '.';
     }
   } else {
     // Enhanced English summarization
     const themes = {
-      error: ['error', 'could not', 'try again', 'clearer'],
-      education: ['school', 'study', 'teacher', 'exam', 'student', 'homework', 'learning'],
+      error: ['error', 'could not', 'try again', 'clearer', 'OCR'],
+      education: ['school', 'study', 'teacher', 'exam', 'student', 'homework', 'learning', 'class'],
       family: ['family', 'mother', 'father', 'brother', 'sister', 'parents', 'home'],
-      friendship: ['friend', 'together', 'speaking', 'social'],
-      literature: ['literature', 'language', 'writers', 'poets', 'Telugu'],
-      personal: ['I am', 'my', 'daily', 'every day'],
-      narrative: ['once', 'lived', 'village', 'story']
+      friendship: ['friend', 'together', 'speaking', 'social', 'play'],
+      literature: ['literature', 'language', 'writers', 'poets', 'Telugu', 'writing'],
+      personal: ['I am', 'my', 'daily', 'every day', 'routine'],
+      narrative: ['once', 'lived', 'village', 'story', 'happened']
     };
     
+    const lowerText = text.toLowerCase();
     const detectedTheme = Object.entries(themes).find(([_, keywords]) =>
-      keywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()))
+      keywords.some(keyword => lowerText.includes(keyword.toLowerCase()))
     )?.[0];
     
     switch (detectedTheme) {
       case 'error':
-        summary = 'The image text could not be clearly recognized. A clearer image is needed for accurate processing.';
+        summary = 'Text recognition failed. A clearer image is needed for processing.';
         break;
       case 'education':
-        summary = 'This text discusses education, academic life, and learning experiences in a student\'s journey.';
+        summary = 'Content discusses education, academic life, and learning experiences.';
         break;
       case 'family':
-        summary = 'This text describes family relationships, home environment, and traditional family values and activities.';
+        summary = 'Text describes family relationships and home environment.';
         break;
       case 'friendship':
-        summary = 'This text talks about friendship, social interactions, and personal communication experiences.';
+        summary = 'Content about friendship and social interactions.';
+        break;
+      case 'literature':
+        summary = 'Discussion about Telugu language and literature.';
         break;
       case 'narrative':
-        summary = 'This text narrates a story about characters and their life experiences.';
+        summary = 'A story or narrative about characters and events.';
         break;
       default:
-        // Extract key information for general content
-        const keyWords = text.toLowerCase().match(/\b(i|we|my|our|today|daily|learning|studying|family|friends)\b/g) || [];
-        if (keyWords.length > 3) {
-          summary = 'This text shares personal experiences, daily activities, and life reflections.';
-        } else {
-          summary = sentences.slice(0, Math.min(2, sentences.length)).join('. ') + '.';
-        }
+        // Extract key sentences for general content
+        summary = sentences.slice(0, Math.min(2, sentences.length)).join('. ').trim() + '.';
     }
   }
   
-  console.log(`Advanced ${language} summarization completed:`, summary);
+  console.log(`Enhanced ${language} summarization completed:`, summary);
   return summary;
 };
 
-// Enhanced main processing function with mode selection
+// Enhanced main processing function with Google Translate integration
 export const processImageComplete = async (
   imageFile: File, 
   mode: ProcessingMode = 'digitize'
@@ -467,12 +478,15 @@ export const processImageComplete = async (
     switch (mode) {
       case 'digitize':
         // Only digitize - no additional processing
+        console.log('Digitization completed successfully');
         break;
         
       case 'translate':
-        // Provide both internal translation and external URL
+        // Provide both internal translation and Google Translate URL
         result.translatedText = await translateTeluguToEnglish(originalText);
+        result.googleTranslateUrl = generateGoogleTranslateUrl(originalText);
         result.externalTranslationUrl = generateExternalTranslationUrl(originalText);
+        console.log('Translation processing completed successfully');
         break;
         
       case 'summarize':
@@ -480,6 +494,7 @@ export const processImageComplete = async (
         result.translatedText = await translateTeluguToEnglish(originalText);
         result.englishSummary = await summarizeText(result.translatedText, 'english');
         result.teluguSummary = await summarizeText(originalText, 'telugu');
+        console.log('Summarization processing completed successfully');
         break;
     }
     
@@ -488,7 +503,7 @@ export const processImageComplete = async (
     
   } catch (error) {
     console.error(`Error in ${mode} processing:`, error);
-    throw new Error(`Failed to complete ${mode} text processing pipeline`);
+    throw new Error(`Failed to complete ${mode} text processing: ${error.message}`);
   }
 };
 
