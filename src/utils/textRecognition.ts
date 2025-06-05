@@ -1,4 +1,3 @@
-
 // Enhanced Telugu text recognition and processing utilities with real OCR
 
 import { pipeline } from '@huggingface/transformers';
@@ -196,9 +195,9 @@ export const recognizeText = async (imageFile: File): Promise<string> => {
     // Convert image file to URL for processing
     const imageUrl = URL.createObjectURL(imageFile);
     
-    // Initialize OCR pipeline - using TrOCR for text recognition
+    // Initialize OCR pipeline - using TrOCR for text recognition with WASM device
     const ocr = await pipeline('image-to-text', 'microsoft/trocr-base-printed', {
-      device: 'cpu'
+      device: 'wasm'
     });
     
     console.log('OCR pipeline initialized, processing image...');
