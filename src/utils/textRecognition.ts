@@ -1,5 +1,7 @@
 
-// Enhanced Telugu text recognition and processing utilities with improved accuracy
+// Enhanced Telugu text recognition and processing utilities with real OCR
+
+import { pipeline } from '@huggingface/transformers';
 
 export interface ProcessingResult {
   originalText: string;
@@ -187,39 +189,45 @@ const teluguGrammarPatterns = [
   { pattern: /(\w+)వి/g, replacement: '$1s' }
 ];
 
-// Enhanced OCR simulation with image analysis
+// Real OCR using Hugging Face Transformers
 export const recognizeText = async (imageFile: File): Promise<string> => {
-  console.log('Starting enhanced text recognition with image analysis...');
+  console.log('Starting real OCR text recognition...');
   
-  // Simulate processing time based on image size
-  const processingTime = Math.min(1000 + (imageFile.size / 10000), 2000);
-  await new Promise(resolve => setTimeout(resolve, processingTime));
-  
-  // Simulate different types of Telugu content based on image characteristics
-  const imageSize = imageFile.size;
-  const fileName = imageFile.name.toLowerCase();
-  
-  let recognizedText: string;
-  
-  // More realistic text based on context clues
-  if (fileName.includes('letter') || fileName.includes('note')) {
-    recognizedText = 'ప్రియమైన స్నేహితుడా, నేను బాగున్నాను. మీరు ఎలా ఉన్నారు? నా చదువు బాగా జరుగుతోంది. గురువులు చాలా మంచిగా చెప్పుతున్నారు. ఈ వారం పరీక్షలు ఉన్నాయి.';
-  } else if (fileName.includes('homework') || fileName.includes('assignment')) {
-    recognizedText = 'నేను ప్రతిరోజూ పాఠశాలకు వెళ్తున్నాను. గణితం మరియు తెలుగు నాకు చాలా ఇష్టం. హోంవర్క్ రోజూ చేస్తున్నాను. గురువు చాలా మంచిగా చెప్పుతారు.';
-  } else if (fileName.includes('story') || fileName.includes('book')) {
-    recognizedText = 'ఒకప్పుడు ఒక చిన్న ఊరిలో ఒక బాలుడు ఉండేవాడు. అతను ప్రతిరోజూ పాఠశాలకు వెళ్లి చదువుకునేవాడు. అతని తల్లిదండ్రులు అతనిని చాలా ప్రేమించేవారు.';
-  } else if (fileName.includes('family') || fileName.includes('personal')) {
-    recognizedText = 'మా కుటుంబంలో నాన్న, అమ్మ, అన్నా మరియు నేను ఉన్నాము. మేము అందరం కలిసి భోజనం చేస్తాము. అమ్మ చాలా రుచిగా వంట చేస్తుంది. వారాంతాల్లో మేము కలిసి సినిమాలు చూస్తాము.';
-  } else if (imageSize > 500000) {
-    // Large image - likely detailed content
-    recognizedText = 'తెలుగు భాష భారతదేశంలో ముఖ్యమైన భాషలలో ఒకటి. ఇది ఆంధ్రప్రదేశ్ మరియు తెలంగాణ రాష్ట్రాల అధికారిక భాష. తెలుగు సాహిత్యం చాలా గొప్పది. అనేక మంది కవులు మరియు రచయితలు తెలుగులో అద్భుతమైన రచనలు చేశారు.';
-  } else {
-    // Default content
-    recognizedText = 'నమస్కారం, నేను తెలుగు నేర్చుకుంటున్నాను. ఈ భాష చాలా అందమైనది. నా స్నేహితులతో తెలుగులో మాట్లాడటం నాకు చాలా ఆనందంగా ఉంటుంది.';
+  try {
+    // Convert image file to URL for processing
+    const imageUrl = URL.createObjectURL(imageFile);
+    
+    // Initialize OCR pipeline - using TrOCR for text recognition
+    const ocr = await pipeline('image-to-text', 'microsoft/trocr-base-printed', {
+      device: 'cpu'
+    });
+    
+    console.log('OCR pipeline initialized, processing image...');
+    
+    // Process the image
+    const result = await ocr(imageUrl);
+    
+    // Clean up the URL
+    URL.revokeObjectURL(imageUrl);
+    
+    let recognizedText = result.generated_text || '';
+    
+    console.log('Raw OCR result:', recognizedText);
+    
+    // If no text is recognized or it's very short, provide a fallback
+    if (!recognizedText || recognizedText.trim().length < 3) {
+      console.log('OCR found minimal text, using fallback');
+      recognizedText = 'పాठ్యం గుర్తించలేకపోయింది. దయచేసి స్పష్టమైన చిత్రం ఎక్కించండి.';
+    }
+    
+    console.log('Final recognized text:', recognizedText);
+    return recognizedText;
+    
+  } catch (error) {
+    console.error('OCR Error:', error);
+    // Fallback for OCR errors
+    return 'పాठ్యం గుర్తించడంలో లోపం జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.';
   }
-  
-  console.log('Enhanced recognition completed:', recognizedText);
-  return recognizedText;
 };
 
 // Advanced Telugu to English translation with context awareness
@@ -246,7 +254,11 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
     'మాట్లాడటం నాకు': 'speaking gives me',
     'గణితం మరియు తెలుగు': 'Mathematics and Telugu',
     'చాలా మంచిగా చెప్పుతారు': 'explains very well',
-    'చాలా మంచిగా చెప్పుతున్నారు': 'are explaining very well'
+    'చాలా మంచిగా చెప్పుతున్నారు': 'are explaining very well',
+    'పాठ్యం గుర్తించలేకపోయింది': 'Text could not be recognized',
+    'స్పష్టమైన చిత్రం ఎక్కించండి': 'Please upload a clearer image',
+    'పాठ్యం గుర్తించడంలో లోపం జరిగింది': 'Error occurred in text recognition',
+    'మళ్లీ ప్రయత్నించండి': 'Please try again'
   };
   
   Object.entries(compoundPhrases).forEach(([telugu, english]) => {
@@ -275,11 +287,6 @@ export const translateTeluguToEnglish = async (text: string): Promise<string> =>
     .replace(/\bdo\/make\b/g, 'do')
     .replace(/\btell\/say\b/g, 'say')
     .trim();
-  
-  // Step 5: Handle remaining Telugu text with contextual translation
-  if (translatedText.split(' ').some(word => /[\u0C00-\u0C7F]/.test(word))) {
-    translatedText = enhanceWithContextualTranslation(text, translatedText);
-  }
   
   console.log('Advanced translation completed:', translatedText);
   return translatedText;
@@ -349,7 +356,8 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
       friendship: ['స్నేహితులు', 'స్నేహితుడు', 'మాట్లాడటం', 'కలిసి'],
       literature: ['సాహిత్యం', 'కవులు', 'రచయితలు', 'రచనలు', 'భాష'],
       daily_life: ['రోజు', 'ఉదయం', 'సాయంత్రం', 'భోజనం', 'వంట'],
-      story: ['ఒకప్పుడు', 'బాలుడు', 'ఊరిలో', 'కథ']
+      story: ['ఒకప్పుడు', 'బాలుడు', 'ఊరిలో', 'కథ'],
+      error: ['లోపం', 'గుర్తించలేకపోయింది', 'ప్రయత్నించండి']
     };
     
     const detectedTheme = Object.entries(themes).find(([_, keywords]) =>
@@ -357,6 +365,9 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
     )?.[0];
     
     switch (detectedTheme) {
+      case 'error':
+        summary = 'చిత్రంలో పాठ్యం స్పష్టంగా గుర్తించలేకపోయింది. స్పష్టమైన చిత్రం అవసరం.';
+        break;
       case 'education':
         summary = 'ఈ వచనం విద్య, పాఠశాల జీవితం మరియు అధ్యయన అనుభవాల గురించి వివరిస్తుంది.';
         break;
@@ -378,6 +389,7 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
   } else {
     // Enhanced English summarization
     const themes = {
+      error: ['error', 'could not', 'try again', 'clearer'],
       education: ['school', 'study', 'teacher', 'exam', 'student', 'homework', 'learning'],
       family: ['family', 'mother', 'father', 'brother', 'sister', 'parents', 'home'],
       friendship: ['friend', 'together', 'speaking', 'social'],
@@ -391,6 +403,9 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
     )?.[0];
     
     switch (detectedTheme) {
+      case 'error':
+        summary = 'The image text could not be clearly recognized. A clearer image is needed for accurate processing.';
+        break;
       case 'education':
         summary = 'This text discusses education, academic life, and learning experiences in a student\'s journey.';
         break;
@@ -424,14 +439,14 @@ export const summarizeText = async (text: string, language: 'english' | 'telugu'
 // Enhanced main processing function
 export const processImageComplete = async (imageFile: File): Promise<ProcessingResult> => {
   try {
-    console.log('Starting advanced complete image processing...');
+    console.log('Starting real OCR complete image processing...');
     
     const originalText = await recognizeText(imageFile);
     const translatedText = await translateTeluguToEnglish(originalText);
     const englishSummary = await summarizeText(translatedText, 'english');
     const teluguSummary = await summarizeText(originalText, 'telugu');
     
-    console.log('Advanced processing completed successfully');
+    console.log('Real OCR processing completed successfully');
     
     return {
       originalText,
@@ -440,14 +455,14 @@ export const processImageComplete = async (imageFile: File): Promise<ProcessingR
       teluguSummary
     };
   } catch (error) {
-    console.error('Error in advanced processing:', error);
-    throw new Error('Failed to complete advanced text processing pipeline');
+    console.error('Error in real OCR processing:', error);
+    throw new Error('Failed to complete real OCR text processing pipeline');
   }
 };
 
 // Initialize functions
 export const initializeRecognizer = async () => {
-  console.log('Advanced text recognizer ready');
+  console.log('Real OCR text recognizer initializing...');
   return true;
 };
 
